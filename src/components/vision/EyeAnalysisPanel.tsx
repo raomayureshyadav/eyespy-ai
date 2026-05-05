@@ -10,7 +10,9 @@ interface Props {
  *  detection happens server-side (see app.py). */
 export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [mediaRatio, setMediaRatio] = useState(16 / 9);
 
   useEffect(() => {
     const update = () => {
@@ -24,21 +26,29 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
     return () => window.removeEventListener("resize", update);
   }, [src]);
 
+  const fittedW = size.w / size.h > mediaRatio ? size.h * mediaRatio : size.w;
+  const fittedH = size.w / size.h > mediaRatio ? size.h : size.w / mediaRatio;
+  const mediaX = (size.w - fittedW) / 2;
+  const mediaY = (size.h - fittedH) / 2;
+
   // Heuristic eye-box positions — placeholder until backend returns real coords.
-  // Assumed face occupies a centered region ~45% of frame width. Eye boxes are
-  // square, side ≈ 15% of face width, centered on each eye.
-  const faceW = size.w * 0.45;
-  const faceH = faceW * 1.3;
-  const faceCx = size.w * 0.5;
-  const faceCy = size.h * 0.5;
-  const faceTop = faceCy - faceH / 2;
-  // Eyes sit ~38% down the face, separated by ~30% of face width
-  const eyeY = faceTop + faceH * 0.38;
+  // Coordinates are based on the visible object-contain media area, not the full
+  // letterboxed panel, so the boxes stay aligned with the actual subject frame.
+  const faceW = fittedW * 0.58;
   const eyeSide = faceW * 0.15;
-  const leftEyeCx = faceCx - faceW * 0.18;
-  const rightEyeCx = faceCx + faceW * 0.18;
+  const eyeY = mediaY + fittedH * 0.31;
+  const leftEyeCx = mediaX + fittedW * 0.34;
+  const rightEyeCx = mediaX + fittedW * 0.63;
   const leftEye = { x: leftEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
   const rightEye = { x: rightEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
+
+  const updateMediaRatio = () => {
+    const media = mediaRef.current;
+    if (!media) return;
+    const width = "videoWidth" in media ? media.videoWidth : media.naturalWidth;
+    const height = "videoHeight" in media ? media.videoHeight : media.naturalHeight;
+    if (width && height) setMediaRatio(width / height);
+  };
 
   return (
     <div
@@ -48,9 +58,9 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
       }`}
     >
       {isVideo ? (
-        <video src={src} className="h-full w-full object-contain" autoPlay loop muted playsInline />
+        <video ref={mediaRef} src={src} className="h-full w-full object-contain" autoPlay loop muted playsInline onLoadedMetadata={updateMediaRatio} />
       ) : (
-        <img src={src} alt="Subject under analysis" className="h-full w-full object-contain" />
+        <img ref={mediaRef} src={src} alt="Subject under analysis" className="h-full w-full object-contain" onLoad={updateMediaRatio} />
       )}
 
       {/* Eye landmark overlay */}
