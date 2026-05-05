@@ -82,7 +82,7 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
                 fontFamily="JetBrains Mono, monospace"
                 fill="var(--primary)"
               >
-                EYE_{i === 0 ? "L" : "R"} · 224×224
+                EYE_{i === 0 ? "L" : "R"}
               </text>
             </g>
           ))}
