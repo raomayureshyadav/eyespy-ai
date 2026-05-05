@@ -25,8 +25,20 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
   }, [src]);
 
   // Heuristic eye-box positions — placeholder until backend returns real coords.
-  const leftEye = { x: size.w * 0.36, y: size.h * 0.42, w: size.w * 0.14, h: size.h * 0.08 };
-  const rightEye = { x: size.w * 0.5, y: size.h * 0.42, w: size.w * 0.14, h: size.h * 0.08 };
+  // Assumed face occupies a centered region ~45% of frame width. Eye boxes are
+  // square, side ≈ 15% of face width, centered on each eye.
+  const faceW = size.w * 0.45;
+  const faceH = faceW * 1.3;
+  const faceCx = size.w * 0.5;
+  const faceCy = size.h * 0.5;
+  const faceTop = faceCy - faceH / 2;
+  // Eyes sit ~38% down the face, separated by ~30% of face width
+  const eyeY = faceTop + faceH * 0.38;
+  const eyeSide = faceW * 0.15;
+  const leftEyeCx = faceCx - faceW * 0.18;
+  const rightEyeCx = faceCx + faceW * 0.18;
+  const leftEye = { x: leftEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
+  const rightEye = { x: rightEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
 
   return (
     <div
@@ -70,7 +82,7 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
                 fontFamily="JetBrains Mono, monospace"
                 fill="var(--primary)"
               >
-                EYE_{i === 0 ? "L" : "R"} · 224×224
+                EYE_{i === 0 ? "L" : "R"}
               </text>
             </g>
           ))}
