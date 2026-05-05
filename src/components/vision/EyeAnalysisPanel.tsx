@@ -10,7 +10,6 @@ interface Props {
  *  detection happens server-side (see app.py). */
 export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [mediaRatio, setMediaRatio] = useState(16 / 9);
 
@@ -42,11 +41,13 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
   const leftEye = { x: leftEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
   const rightEye = { x: rightEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
 
-  const updateMediaRatio = () => {
-    const media = mediaRef.current;
-    if (!media) return;
-    const width = "videoWidth" in media ? media.videoWidth : media.naturalWidth;
-    const height = "videoHeight" in media ? media.videoHeight : media.naturalHeight;
+  const updateImageRatio = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: width, naturalHeight: height } = event.currentTarget;
+    if (width && height) setMediaRatio(width / height);
+  };
+
+  const updateVideoRatio = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+    const { videoWidth: width, videoHeight: height } = event.currentTarget;
     if (width && height) setMediaRatio(width / height);
   };
 
@@ -58,9 +59,9 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
       }`}
     >
       {isVideo ? (
-        <video ref={mediaRef} src={src} className="h-full w-full object-contain" autoPlay loop muted playsInline onLoadedMetadata={updateMediaRatio} />
+        <video src={src} className="h-full w-full object-contain" autoPlay loop muted playsInline onLoadedMetadata={updateVideoRatio} />
       ) : (
-        <img ref={mediaRef} src={src} alt="Subject under analysis" className="h-full w-full object-contain" onLoad={updateMediaRatio} />
+        <img src={src} alt="Subject under analysis" className="h-full w-full object-contain" onLoad={updateImageRatio} />
       )}
 
       {/* Eye landmark overlay */}
