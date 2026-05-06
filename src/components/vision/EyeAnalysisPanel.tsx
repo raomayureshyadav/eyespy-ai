@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { computeEyeLayout } from "./eyeGeometry";
 
 interface Props {
   src: string;
@@ -25,21 +26,7 @@ export function EyeAnalysisPanel({ src, isVideo, analyzing }: Props) {
     return () => window.removeEventListener("resize", update);
   }, [src]);
 
-  const fittedW = size.w / size.h > mediaRatio ? size.h * mediaRatio : size.w;
-  const fittedH = size.w / size.h > mediaRatio ? size.h : size.w / mediaRatio;
-  const mediaX = (size.w - fittedW) / 2;
-  const mediaY = (size.h - fittedH) / 2;
-
-  // Heuristic eye-box positions — placeholder until backend returns real coords.
-  // Coordinates are based on the visible object-contain media area, not the full
-  // letterboxed panel, so the boxes stay aligned with the actual subject frame.
-  const faceW = fittedW * 0.58;
-  const eyeSide = faceW * 0.15;
-  const eyeY = mediaY + fittedH * 0.31;
-  const leftEyeCx = mediaX + fittedW * 0.34;
-  const rightEyeCx = mediaX + fittedW * 0.63;
-  const leftEye = { x: leftEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
-  const rightEye = { x: rightEyeCx - eyeSide / 2, y: eyeY - eyeSide / 2, w: eyeSide, h: eyeSide };
+  const { leftEye, rightEye } = computeEyeLayout(size, mediaRatio);
 
   const updateImageRatio = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth: width, naturalHeight: height } = event.currentTarget;
